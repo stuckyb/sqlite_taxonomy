@@ -16,34 +16,34 @@
 
 
 -- get_schema_drop
-drop table "names_to_taxonconcepts";
-drop table "tc_relationships";
-drop table "taxon_concepts";
-drop table "taxonomies";
-drop table "name_spellings";
-drop table "names";
-drop table "citations";
-drop table "ranks";
-drop table "rank_systems";
+DROP table "names_to_taxonconcepts";
+DROP table "tc_relationships";
+DROP table "taxon_concepts";
+DROP table "taxonomies";
+DROP table "name_spellings";
+DROP table "names";
+DROP table "citations";
+DROP table "ranks";
+DROP table "rank_systems";
 
 -- get_smallpackage_pre_sql 
 
 -- get_schema_create
-create table "rank_systems" (
+CREATE TABLE "rank_systems" (
    ranksys_id  integer PRIMARY KEY,
    namestr     text    ,
    description text
 )   ;
 -- Note the foreign key constraint: if a rank system is deleted, we should automatically
 -- delete its component ranks.
-create table "ranks" (
+CREATE TABLE "ranks" (
    rank_id            integer PRIMARY KEY,
    ranksys_id         integer REFERENCES rank_systems (ranksys_id) ON DELETE CASCADE,
    namestr            text    ,
    nearest_parent_id  integer ,
    obligate_parent_id integer
 )   ;
-create table "citations" (
+CREATE TABLE "citations" (
    citation_id   integer PRIMARY KEY,
    citationstr   text            ,
    URL           text            ,
@@ -52,12 +52,12 @@ create table "citations" (
 )   ;
 -- Names are allowed to exist without citations, so if a referenced citation is deleted,
 -- just set the citation_id value to NULL.
-create table "names" (
+CREATE TABLE "names" (
    name_id     integer PRIMARY KEY	,
    namestr     text			,
    citation_id integer REFERENCES citations (citation_id) ON DELETE SET NULL
 )   ;
-create table "name_spellings" (
+CREATE TABLE "name_spellings" (
    name_id integer REFERENCES names (name_id) ON DELETE CASCADE,
    spelling text    
 )   ;
@@ -65,7 +65,7 @@ create table "name_spellings" (
 -- root_tc_id.  However, this would create circular foreign key constraints with
 -- the taxon_concepts table, and it probably makes more sense to enforce the
 -- constraint on taxon_concepts, not taxonomies.
-create table "taxonomies" (
+CREATE TABLE "taxonomies" (
    taxonomy_id integer PRIMARY KEY,
    name        text    ,
    ismaster    boolean ,
@@ -77,7 +77,7 @@ create table "taxonomies" (
 -- a cascaded delete that deletes all of the child taxon concepts, names_to_taxonconcepts
 -- entries, and tc_relationships entries.  Names and citations will not be automatically
 -- deleted because they might be used by a different taxonomy.
-create table "taxon_concepts" (
+CREATE TABLE "taxon_concepts" (
    tc_id       integer PRIMARY KEY,
    parent_id   integer          ,
    taxonomy_id integer REFERENCES taxonomies (taxonomy_id) ON DELETE CASCADE,
@@ -86,7 +86,7 @@ create table "taxon_concepts" (
    sort_order  integer DEFAULT 0
 )   ;
 -- Create an enum "type" to record the status of a taxonomic name.
-CREATE table validity_enum (
+CREATE TABLE validity_enum (
    value text PRIMARY KEY
 );
 INSERT INTO validity_enum VALUES
@@ -96,14 +96,14 @@ INSERT INTO validity_enum VALUES
 -- queries don't have to worry about handling NULL values.  Also set the default
 -- value of validity to 'valid'.  Finally, if either the referenced name or
 -- taxon concept is deleted, automaticaly delete the relationship connecting them.
-create table "names_to_taxonconcepts" (
+CREATE TABLE "names_to_taxonconcepts" (
    tc_id integer REFERENCES taxon_concepts (tc_id) ON DELETE CASCADE,
    name_id integer REFERENCES names (name_id) ON DELETE CASCADE     ,
    validity text REFERENCES validity_enum (value) DEFAULT 'valid'   ,
    authordisp_prefix text DEFAULT '' ,
    authordisp_postfix text DEFAULT ''
 )   ;
-create table "tc_relationships" (
+CREATE TABLE "tc_relationships" (
    master_tc_id integer REFERENCES taxon_concepts (tc_id) ON DELETE CASCADE,
    alt_tc_id integer REFERENCES taxon_concepts (tc_id) ON DELETE CASCADE   ,
    relationshiptype text    
