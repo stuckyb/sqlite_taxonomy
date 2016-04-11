@@ -10,13 +10,22 @@ import taxolib.nameresolve as nameresolve
 from argparse import ArgumentParser
 
 
+# Generate the help message for the resolvers option.
+resolvers = nameresolve.getResolversList()
+resolvernames = [resolver.getSourceDescription() for resolver in resolvers]
+for cnt in range(len(resolvernames)):
+    resolvernames[cnt] = '"' + str(cnt) + '" = ' + resolvernames[cnt]
+citehelpstr = ('the name citation resolver(s) to use (' + ', '.join(resolvernames) +
+    ', "all" = all resolvers [default])')
+
 argp = ArgumentParser(description='Loads taxonomies from CSV files into the MOL taxonomy database \
 schema.  The single required argument provides the location of a configuration file that specifies \
 the input CSV file and how it should be parsed.  The program also needs to know how to connect to \
-the taxonomy database.  By default, it looks for a configuration file called "database.conf"; an \
-alternative database configuration file can be specified using the -d option.')
-argp.add_argument('-d', '--dbconf', help='the database configuration file ("database.conf" by default)')
-argp.add_argument('-l', '--resolvers', help='the name citation resolver(s) to use ("all" by default)')
+the taxonomy database, so a database configuration file (for a Postgres database) or a database \
+file (for SQLite) must be provided.  By default, "database.conf" is used; an alternative \
+configuration file or database file can be specified using the -d option.')
+argp.add_argument('-d', '--dbconf', help='the database configuration file or database file ("database.conf" by default)')
+argp.add_argument('-l', '--resolvers', help=citehelpstr)
 argp.add_argument('-c', '--comptaxoid', type=int, help='the ID of a taxonomy to check for name citation \
 data (-1 [=none] by default)')
 argp.add_argument('infile', help='the CSV taxonomy configuration file')
@@ -58,7 +67,6 @@ print 'done.'
 
 useres = args.resolvers
 if useres != 'none':
-    resolvers = nameresolve.getResolversList()
     if useres != 'all':
         try:
             resindex = int(useres)
