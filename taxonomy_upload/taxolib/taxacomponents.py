@@ -73,7 +73,7 @@ class NameList:
         # A corresponding list indicating whether to use parentheses for each name author string.
         self.useparenslist = []
 
-        # The index of the preferred name in the names list.
+        # The index of the preferred (valid) name in the names list.
         self.preferred = None
 
         # The taxon associated with the list of names.
@@ -151,7 +151,7 @@ class NameList:
                 # Load the name (and citation information).
                 name = Name()
                 name.loadFromDB(pgcur, nameid)
-                preferred = res[1]
+                preferred = (res[1] == 'valid')
                 use_parens = (res[2] == '(')
 
                 self.addName(name, preferred, use_parens)
@@ -159,7 +159,8 @@ class NameList:
     def persist(self, pgcur, tc_id, do_commit=True):
         """
         Ensures that all names in the list are associated with the taxon concept in the
-        taxonomy database.
+        taxonomy database.  Note that all names besides the preferred/valid name are
+        entered into the database as synonyms.
         """
         for name, useparens, index in zip(self.names, self.useparenslist, range(len(self.names))):
             dbwrite = False
@@ -176,12 +177,12 @@ class NameList:
             # If not, link the name to the new taxon_concept.
             if pgcur.fetchone() == None:
                 query = """INSERT INTO names_to_taxonconcepts
-                    (tc_id, name_id, preferred, authordisp_prefix, authordisp_postfix)
+                    (tc_id, name_id, validity, authordisp_prefix, authordisp_postfix)
                     VALUES (?, ?, ?, ?, ?)"""
                 if useparens:
-                    pgcur.execute(query, (tc_id, name_id, (index == self.preferred), '(', ')'))
+                    pgcur.execute(query, (tc_id, name_id, 'valid' if (index == self.preferred) else 'synonym', '(', ')'))
                 else:
-                    pgcur.execute(query, (tc_id, name_id, (index == self.preferred), '', ''))
+                    pgcur.execute(query, (tc_id, name_id, 'valid' if (index == self.preferred) else 'synonym', '', ''))
                 dbwrite = True
 
         if do_commit and dbwrite:
