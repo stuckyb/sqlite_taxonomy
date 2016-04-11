@@ -499,7 +499,6 @@ class CoLNamesResolver(NamesResolver):
         """
         args = { 'name': taxon.name.namestr, 'response': 'full', 'format': 'xml' }
         queryurl = self.col_url + urllib.urlencode(args)
-        #print queryurl
 
         try:
             res = self.queryXML(queryurl)
@@ -510,20 +509,27 @@ class CoLNamesResolver(NamesResolver):
                     + '" failed due to multiple timeout errors.')
             return None
 
-        # Make sure we found exactly 1 match.
-        rootattr = res.getroot().attrib
-        if rootattr['total_number_of_results'] != '1' or rootattr['number_of_results_returned'] != '1':
+        # Make sure we found a match.  Note that the CoL Web API documentation claims that searches
+        # only return exact matches, but this is not true.  Name strings that contain the the search
+        # string are also returned, so we need to check each to see if we have an exact match.
+        found_match = False
+        for result_tag in res.getroot():
+            if taxon.name.namestr == self.cleanNameString(result_tag.find('name').text):
+                found_match = True
+                break
+
+        if not(found_match):
             return None
 
         # Retrieve and process the rank and name.
-        srank = res.find('./result/rank').text
-        sname = res.find('./result/name').text
+        srank = result_tag.find('rank').text
+        sname = result_tag.find('name').text
         sname = self.cleanNameString(sname)
 
         # Get the kingdom name for the search result.
-        kingdomnode = res.find('./result/classification/taxon[1]/name')
+        kingdomnode = result_tag.find('./classification/taxon[1]/name')
         if kingdomnode == None:
-            kingdomnode = res.find('./result/accepted_name/classification/taxon[1]/name')
+            kingdomnode = result_tag.find('./accepted_name/classification/taxon[1]/name')
         if kingdomnode != None:
             skingdom = kingdomnode.text
         else:
@@ -531,9 +537,8 @@ class CoLNamesResolver(NamesResolver):
 
         #print srank, sname, skingdom
 
-        # See if we have a full match.
-        if (srank == taxon.getRankString() and sname == taxon.name.namestr
-                and skingdom == self.search_kingdom):
+        # Further verify that we have a full match.
+        if (srank == taxon.getRankString() and skingdom == self.search_kingdom):
             return (res, sname, srank)
         else:
             return None
