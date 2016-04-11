@@ -1,10 +1,11 @@
 
-import psycopg2 as ppg2
+#import psycopg2 as ppg2
+import sqlite3
 from ConfigParser import RawConfigParser
 from taxoconfig import ConfigError
 
 
-def getDBCursor(conffile):
+def _getPostgresDBCursor(conffile):
     # Read the database connection settings from the configuration file.
     cp = RawConfigParser()
     res = cp.read(conffile)
@@ -24,4 +25,13 @@ def getDBCursor(conffile):
     pgcur.execute('SET search_path TO ' + dbschema)
 
     return pgcur
+
+def _getSQLiteDBCursor(dbfile):
+    conn = sqlite3.connect(dbfile)
+    slcur = conn.cursor()
+
+    return slcur
+
+def getDBCursor(filein):
+    return _getSQLiteDBCursor(filein)
 
