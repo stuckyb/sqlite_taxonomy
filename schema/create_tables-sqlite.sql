@@ -1,7 +1,7 @@
 -- This is derived from create_tables.sql, which was written for PostgreSQL.
 -- This version was modified to work with SQLite.
 --
--- The changes are as follows:
+-- The most important changes are as follows:
 -- 1. UUID columns were changed to integer columns.  If UUIDs are
 --    desired, the best solution seems to be to use the "blob" type.
 --    See http://wtanaka.com/node/8106.
@@ -126,10 +126,10 @@ create table "tc_relationships" (
 -- taxon concept, name, and citation.
 INSERT INTO citations
     (citation_id, citationstr, url, doi, authordisplay)
-    VALUES (1, '', '', '');
+    VALUES (1, '', '', '', '');
 INSERT INTO taxonomies
     (taxonomy_id, name, ismaster, root_tc_id, citation_id)
-    VALUES (1, 'MOL backbone', true, 1, 1);
+    VALUES (1, 'Backbone taxonomy', 1, 1, 1);
 INSERT INTO citations
     (citation_id, citationstr, url, doi, authordisplay)
     VALUES (2,
