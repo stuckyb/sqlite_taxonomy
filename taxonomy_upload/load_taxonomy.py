@@ -16,7 +16,7 @@ resolvernames = [resolver.getSourceDescription() for resolver in resolvers]
 for cnt in range(len(resolvernames)):
     resolvernames[cnt] = '"' + str(cnt) + '" = ' + resolvernames[cnt]
 citehelpstr = ('the name citation resolver(s) to use (' + ', '.join(resolvernames) +
-    ', "all" = all resolvers [default])')
+    ', "all" = all resolvers [default], "none" = no citation resolution)')
 
 argp = ArgumentParser(description='Loads taxonomies from CSV files into the MOL taxonomy database \
 schema.  The single required argument provides the location of a configuration file that specifies \
