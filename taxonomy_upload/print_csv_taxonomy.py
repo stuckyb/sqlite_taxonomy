@@ -13,11 +13,12 @@ argp = ArgumentParser(description='Prints a text representation of the taxonomy 
 a CSV taxonomy file.  Also prints metadata about the taxonomy from the taxonomy configuration file.  \
 The only required argument is the location of a configuration file that specifies the input CSV file \
 and how it should be parsed.  Parsing a CSV taxonomy file requires accessing taxonomic rank \
-information in the taxonomy database, so a database configuration file must be provided.  By default, \
-"database.conf" is used, but an alternative configuration file name can be provided using the -d option.')
+information in the taxonomy database, so a database configuration file (for a Postgres database) or \
+a database file (for SQLite) must be provided.  By default, "database.conf" is used, but an \
+alternative configuration file or database file can be provided using the -d option.')
 argp.add_argument('-n', '--numtaxa', type=int, help='the number of taxa to print (all by default)')
 argp.add_argument('-m', '--maxdepth', type=int, help='the maximum depth to traverse the taxa tree (no limit by default)')
-argp.add_argument('-d', '--dbconf', help='the database configuration file ("database.conf" by default)')
+argp.add_argument('-d', '--dbconf', help='the database configuration file or database file ("database.conf" by default)')
 argp.add_argument('infile', help='the CSV taxonomy configuration file')
 argp.set_defaults(dbconf='database.conf', numtaxa=-1, maxdepth=-1)
 args = argp.parse_args()
