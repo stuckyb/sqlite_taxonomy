@@ -20,7 +20,8 @@ class TaxonomyError(Exception):
 class TaxonomyBase:
     # Define the "nil" UUID constant as returned by the uuid-osp Postgres module
     # function uuid_nil().
-    NIL_UUID = '00000000-0000-0000-0000-000000000000'
+    #NIL_UUID = '00000000-0000-0000-0000-000000000000'
+    NIL_UUID = 0
 
     def __init__(self, taxonomy_id, name='', ismaster=False, citation=None, roottaxon=None):
         self.taxonomy_id = taxonomy_id
