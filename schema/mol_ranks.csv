@@ -1,4 +1,3 @@
-rank_id,ranksys_id,namestr,nearest_parent_id,obligate_parent_id
 0,0,unranked,0,0
 10,1,Kingdom,10,10
 15,1,Subkingdom,10,10

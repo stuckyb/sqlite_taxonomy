@@ -1,4 +1,3 @@
-ranksys_id,namestr,description
 0,higher,Rank names for taxonomic groups above the kingdom level.
 1,animals,Standard taxonomic ranks for animals.
 2,plants: phyla,A taxonomic hierarchy for plants that uses phylum and its derivatives.
