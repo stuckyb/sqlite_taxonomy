@@ -37,7 +37,7 @@ class TaxonomyBase:
         """
         query = """SELECT name, citation_id, ismaster, root_tc_id
             FROM taxonomies
-            WHERE taxonomy_id=%s"""
+            WHERE taxonomy_id=?"""
         pgcur.execute(query, (self.taxonomy_id,))
         res = pgcur.fetchone()
 
@@ -55,7 +55,7 @@ class TaxonomyBase:
         # Get the rank ID and taxonomy ID of the root taxon concept.
         query = """SELECT tc.rank_id, tc.taxonomy_id
             FROM taxon_concepts tc, ranks r
-            WHERE tc.tc_id=%s AND tc.rank_id=r.rank_id"""
+            WHERE tc.tc_id=? AND tc.rank_id=r.rank_id"""
         pgcur.execute(query, (roottc_id,))
         res = pgcur.fetchone()
         rankid = res[0]
@@ -166,7 +166,7 @@ class Taxonomy(TaxonomyBase):
         # First, check if this taxonomy already exists in the database.
         query = """SELECT taxonomy_id
             FROM taxonomies
-            WHERE taxonomy_id=%s AND ismaster=%s"""
+            WHERE taxonomy_id=? AND ismaster=?"""
         pgcur.execute(query, (self.taxonomy_id, self.ismaster))
         res = pgcur.fetchone()
 
@@ -178,7 +178,7 @@ class Taxonomy(TaxonomyBase):
             # foreign key constraint for the child taxon concepts can be satisfied.
             query = """INSERT INTO taxonomies
                 (taxonomy_id, name, citation_id, ismaster, root_tc_id)
-                VALUES (%s, %s, %s, %s, %s)"""
+                VALUES (?, ?, ?, ?, ?)"""
             pgcur.execute(query, (self.taxonomy_id, self.name, citation_id, self.ismaster, None))
 
             # Make sure all taxon concepts, including those from the backbone taxonomy,
@@ -195,8 +195,8 @@ class Taxonomy(TaxonomyBase):
 
             # Update the taxonomy metadata entry with the root taxon concept ID.
             query = """UPDATE taxonomies
-                SET root_tc_id=%s
-                WHERE taxonomy_id=%s"""
+                SET root_tc_id=?
+                WHERE taxonomy_id=?"""
             pgcur.execute(query, (root_tcid, self.taxonomy_id))
             pgcur.connection.commit()
         elif printprogress:
