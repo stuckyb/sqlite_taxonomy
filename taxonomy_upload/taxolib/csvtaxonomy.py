@@ -247,6 +247,11 @@ class CSVTaxonomyParser:
                 if namestr != '':
                     # Convert all characters but the first to lower case.
                     namestr = namestr[0].upper() + namestr[1:].lower()
+                    # If this name includes a subgenus designation, make sure the first character of
+                    # the subgenus name is capitalized.
+                    p_index = namestr.find('(')
+                    if (p_index > 1):
+                        namestr = namestr[:p_index+1] + namestr[p_index+1].upper() + namestr[p_index+2:]
         
                     # See if this taxon has already been processed.  If not, create a Taxon object for it.
                     childtaxon = curparent.findChild(rankid, namestr)
