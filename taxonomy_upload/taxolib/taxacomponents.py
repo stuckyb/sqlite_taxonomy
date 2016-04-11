@@ -479,10 +479,9 @@ class Taxon:
             # Add a new taxon concept to the database.
             query = """INSERT INTO taxon_concepts
                 (parent_id, taxonomy_id, rank_id, depth)
-                VALUES (?, ?, ?, ?)
-                RETURNING tc_id"""
+                VALUES (?, ?, ?, ?)"""
             pgcur.execute(query, (parent_id, taxo_id, self.rank_id, self.depth))
-            tc_id = pgcur.fetchone()[0]
+            tc_id = pgcur.lastrowid
         else:
             print ('The taxon concept "' + self._getRankNameString() + '" for taxonomy ID '
                 + str(taxo_id) + ' already exists in the database.')
@@ -711,11 +710,10 @@ class Name:
             # Add the name to the database.
             query = """INSERT INTO names
                 (namestr, citation_id)
-                VALUES (?, ?)
-                RETURNING name_id"""
+                VALUES (?, ?)"""
             pgcur.execute(query, (self.namestr, cite_id))
 
-            name_id = pgcur.fetchone()[0]
+            name_id = pgcur.lastrowid
         else:
             # Use the ID of the existing name entry.
             name_id = res[0]
