@@ -134,12 +134,12 @@ class NameList:
 
     def loadFromDB(self, pgcur, tc_id):
         """
-        Loads the name list for given taxon ID from the database.
+        Loads the name list for a given taxon ID from the database.
         """
         self.names = []
         self.useparenslist = []
 
-        query = """SELECT nttc.name_id, nttc.preferred, nttc.authordisp_prefix
+        query = """SELECT nttc.name_id, nttc.validity, nttc.authordisp_prefix
             FROM names_to_taxonconcepts nttc
             WHERE nttc.tc_id=?"""
         pgcur.execute(query, (tc_id,))
@@ -427,7 +427,7 @@ class Taxon:
         # See if a corresponding taxon concept already exists in the database.
         query = """SELECT tc.tc_id
             FROM taxon_concepts tc, names_to_taxonconcepts nttc, names n
-            WHERE tc.tc_id=nttc.tc_id AND nttc.name_id=n.name_id AND nttc.preferred=TRUE
+            WHERE tc.tc_id=nttc.tc_id AND nttc.name_id=n.name_id AND nttc.validity='valid'
                 AND tc.taxonomy_id=? AND tc.rank_id=? AND n.namestr=?"""
         pgcur.execute(query, (taxo_id, self.rank_id, self.name.namestr))
         res = pgcur.fetchone()
