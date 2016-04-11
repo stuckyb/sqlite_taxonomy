@@ -26,7 +26,7 @@ class RankTable:
 
         # Now get the ranks for each rank system.
         for rsid in self.namestoIDs.keys():
-            pgcur.execute('SELECT rank_id, namestr FROM ranks WHERE ranksys_id=%s ORDER BY rank_id',
+            pgcur.execute('SELECT rank_id, namestr FROM ranks WHERE ranksys_id=? ORDER BY rank_id',
                     (rsid,))
             for rec in pgcur:
                 self.namestoIDs[rsid][rec[1]] = rec[0]
@@ -141,7 +141,7 @@ class NameList:
 
         query = """SELECT nttc.name_id, nttc.preferred, nttc.authordisp_prefix
             FROM names_to_taxonconcepts nttc
-            WHERE nttc.tc_id=%s"""
+            WHERE nttc.tc_id=?"""
         pgcur.execute(query, (tc_id,))
         results = pgcur.fetchall()
 
@@ -170,14 +170,14 @@ class NameList:
             # See if this name is already linked to the taxon concept.
             query = """SELECT name_id
                 FROM names_to_taxonconcepts nttc
-                WHERE nttc.name_id=%s AND nttc.tc_id=%s"""
+                WHERE nttc.name_id=? AND nttc.tc_id=?"""
             pgcur.execute(query, (name_id, tc_id))
 
             # If not, link the name to the new taxon_concept.
             if pgcur.fetchone() == None:
                 query = """INSERT INTO names_to_taxonconcepts
                     (tc_id, name_id, preferred, authordisp_prefix, authordisp_postfix)
-                    VALUES (%s, %s, %s, %s, %s)"""
+                    VALUES (?, ?, ?, ?, ?)"""
                 if useparens:
                     pgcur.execute(query, (tc_id, name_id, (index == self.preferred), '(', ')'))
                 else:
@@ -207,15 +207,15 @@ class Taxon:
 
         query = """SELECT DISTINCT tc.tc_id, tc.taxonomy_id, tc.rank_id
             FROM names n, names_to_taxonconcepts nttc, taxon_concepts tc
-            WHERE n.namestr LIKE %s AND n.name_id=nttc.name_id AND nttc.tc_id=tc.tc_id"""
+            WHERE n.namestr LIKE ? AND n.name_id=nttc.name_id AND nttc.tc_id=tc.tc_id"""
         params = [searchstr]
         if pref_names_only:
             query += ' AND nttc.preferred=TRUE'
         if taxonomy_id != None:
-            query += ' AND tc.taxonomy_id=%s'
+            query += ' AND tc.taxonomy_id=?'
             params.append(taxonomy_id)
         if rank_id != None:
-            query += ' AND tc.rank_id=%s'
+            query += ' AND tc.rank_id=?'
             params.append(rank_id)
         pgcur.execute(query, params)
 
@@ -338,7 +338,7 @@ class Taxon:
         # Get the taxon concept information.
         query = """SELECT tc.rank_id, tc.depth, tc.taxonomy_id
             FROM taxon_concepts tc
-            WHERE tc.tc_id=%s"""
+            WHERE tc.tc_id=?"""
         pgcur.execute(query, (tc_id,))
         res = pgcur.fetchone()
 
@@ -359,7 +359,7 @@ class Taxon:
         # Now process all children of this taxon that are part of the same taxonomy.
         query = """SELECT tc_id
             FROM taxon_concepts
-            WHERE parent_id=%s AND taxonomy_id=%s"""
+            WHERE parent_id=? AND taxonomy_id=?"""
         pgcur.execute(query, (tc_id, self.taxonomy_id))
         results = pgcur.fetchall()
         
@@ -428,7 +428,7 @@ class Taxon:
         query = """SELECT tc.tc_id
             FROM taxon_concepts tc, names_to_taxonconcepts nttc, names n
             WHERE tc.tc_id=nttc.tc_id AND nttc.name_id=n.name_id AND nttc.preferred=TRUE
-                AND tc.taxonomy_id=%s AND tc.rank_id=%s AND n.namestr=%s"""
+                AND tc.taxonomy_id=? AND tc.rank_id=? AND n.namestr=?"""
         pgcur.execute(query, (taxo_id, self.rank_id, self.name.namestr))
         res = pgcur.fetchone()
 
@@ -448,7 +448,7 @@ class Taxon:
 
         query = """SELECT parent_id
             FROM taxon_concepts tc
-            WHERE tc.tc_id=%s"""
+            WHERE tc.tc_id=?"""
         pgcur.execute(query, (tc_id,))
         res = pgcur.fetchone()
 
@@ -479,7 +479,7 @@ class Taxon:
             # Add a new taxon concept to the database.
             query = """INSERT INTO taxon_concepts
                 (parent_id, taxonomy_id, rank_id, depth)
-                VALUES (%s, %s, %s, %s)
+                VALUES (?, ?, ?, ?)
                 RETURNING tc_id"""
             pgcur.execute(query, (parent_id, taxo_id, self.rank_id, self.depth))
             tc_id = pgcur.fetchone()[0]
@@ -633,7 +633,7 @@ class Name:
         """
         query = """SELECT name_id, namestr, citation_id
             FROM names
-            WHERE name_id=%s"""
+            WHERE name_id=?"""
         pgcur.execute(query, (name_id,))
         res = pgcur.fetchone()
 
@@ -665,8 +665,8 @@ class Name:
 
         query = """SELECT DISTINCT n.name_id, n.citation_id
             FROM names n, names_to_taxonconcepts nttc, taxon_concepts tc
-            WHERE n.namestr=%s AND n.name_id=nttc.name_id AND nttc.tc_id=tc.tc_id
-                AND nttc.preferred=TRUE AND tc.taxonomy_id=%s AND tc.rank_id=%s"""
+            WHERE n.namestr=? AND n.name_id=nttc.name_id AND nttc.tc_id=tc.tc_id
+                AND nttc.preferred=TRUE AND tc.taxonomy_id=? AND tc.rank_id=?"""
         pgcur.execute(query, (namestr, taxonomy_id, rank_id))
         results = pgcur.fetchall()
 
@@ -700,9 +700,9 @@ class Name:
 
         query = """SELECT n.name_id
             FROM names n
-            WHERE n.namestr=%s AND n.citation_id"""
+            WHERE n.namestr=? AND n.citation_id"""
         if cite_id != None:
-            pgcur.execute(query + '=%s', (self.namestr, cite_id))
+            pgcur.execute(query + '=?', (self.namestr, cite_id))
         else:
             pgcur.execute(query + ' IS NULL', (self.namestr,))
         res = pgcur.fetchone()
@@ -711,7 +711,7 @@ class Name:
             # Add the name to the database.
             query = """INSERT INTO names
                 (namestr, citation_id)
-                VALUES (%s, %s)
+                VALUES (?, ?)
                 RETURNING name_id"""
             pgcur.execute(query, (self.namestr, cite_id))
 
@@ -746,7 +746,7 @@ class Citation:
     def loadFromDB(self, pgcur, cite_id):
         query = """SELECT citationstr, url, doi, authordisplay
             FROM citations
-            WHERE citation_id=%s"""
+            WHERE citation_id=?"""
         pgcur.execute(query, (cite_id,))
         res = pgcur.fetchone()
 
@@ -769,7 +769,7 @@ class Citation:
         if self.doi != None and self.doi != '':
             query = """SELECT citation_id
                 FROM citations c
-                WHERE c.doi=%s"""
+                WHERE c.doi=?"""
             pgcur.execute(query, (self.doi,))
             res = pgcur.fetchone()
             if res != None:
@@ -777,7 +777,7 @@ class Citation:
         elif self.url != None and self.url != '':
             query = """SELECT citation_id
                 FROM citations c
-                WHERE c.url=%s"""
+                WHERE c.url=?"""
             pgcur.execute(query, (self.url,))
             res = pgcur.fetchone()
             if res != None:
@@ -785,7 +785,7 @@ class Citation:
         elif self.citestr != None and self.citestr != '':
             query = """SELECT citation_id
                 FROM citations c
-                WHERE c.citationstr=%s"""
+                WHERE c.citationstr=?"""
             pgcur.execute(query, (self.citestr,))
             res = pgcur.fetchone()
             if res != None:
@@ -795,7 +795,7 @@ class Citation:
                 FROM citations c
                 WHERE (c.citationstr IS NULL OR c.citationstr='') AND
                     (c.url IS NULL OR c.url='') AND
-                    (c.doi IS NULL OR c.doi='') AND c.authordisplay=%s"""
+                    (c.doi IS NULL OR c.doi='') AND c.authordisplay=?"""
             pgcur.execute(query, (self.authordisp,))
             res = pgcur.fetchone()
             if res != None:
@@ -805,7 +805,7 @@ class Citation:
         if citation_id == None:
             query = """INSERT INTO citations
                 (citationstr, url, doi, authordisplay)
-                VALUES (%s, %s, %s, %s)
+                VALUES (?, ?, ?, ?)
                 RETURNING citation_id"""
             pgcur.execute(query, (self.citestr, self.url, self.doi, self.authordisp))
             res = pgcur.fetchone()
