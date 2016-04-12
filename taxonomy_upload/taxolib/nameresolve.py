@@ -568,40 +568,38 @@ class CoLNamesResolver(NamesResolver):
         # Make sure we found a match.  Note that the CoL Web API documentation claims that searches
         # only return exact matches, but this is not true.  Name strings that contain the search
         # string are also returned, so we need to check each to see if we have an exact match.
-        found_match = False
+        match_count = 0
         for result_tag in res.getroot():
-            # Retrieve, process, and check the taxon name.
+            # Retrieve and process the taxon name.
             sname = self.cleanNameString(result_tag.find('name').text)
-            if name_searchstr == sname:
-                found_match = True
-                break
+            # Retrieve the rank.
+            srank = result_tag.find('rank').text
+            # Get the kingdom name.
+            kingdomnode = result_tag.find('./classification/taxon[1]/name')
+            if kingdomnode == None:
+                kingdomnode = result_tag.find('./accepted_name/classification/taxon[1]/name')
+            if kingdomnode != None:
+                skingdom = kingdomnode.text
+            else:
+                skingdom = ''
+            #print srank, sname, skingdom
 
-        if not(found_match):
-            return None
+            # Check for a match.
+            if (name_searchstr == sname) and (srank == taxon.getRankString() and
+                    skingdom == self.search_kingdom):
+                match = (result_tag, sname, srank)
+                match_count += 1
 
-        # Retrieve the rank.
-        srank = result_tag.find('rank').text
-
-        # Get the kingdom name for the search result.
-        kingdomnode = result_tag.find('./classification/taxon[1]/name')
-        if kingdomnode == None:
-            kingdomnode = result_tag.find('./accepted_name/classification/taxon[1]/name')
-        if kingdomnode != None:
-            skingdom = kingdomnode.text
-        else:
-            skingdom = ''
-
-        #print srank, sname, skingdom
-
-        # Further verify that we have a full match.
-        if not(srank == taxon.getRankString() and skingdom == self.search_kingdom):
+        # If there is more than one name/rank match, we don't know which is the correct
+        # match and so we can't use any.
+        if match_count != 1:
             return None
 
         # Retrieve and process the author element.
-        sauthor = result_tag.find('./author').text
+        sauthor = match[0].find('./author').text
         authorinfo = self.processAuthorString(sauthor)
 
-        return (res, sname, srank, authorinfo)
+        return match + (authorinfo,)
 
     def processTaxon(self, taxon, depth):
         """
