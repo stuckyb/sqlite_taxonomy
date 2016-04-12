@@ -268,6 +268,13 @@ class NamesResolver(TaxonVisitor):
         # Make sure only the first letter of the name string is capitalized.
         namestr = namestr[0].upper() + namestr[1:].lower()
 
+        # If this name includes a subgenus designation, make sure the first character of
+        # the subgenus name is capitalized.
+        s_index = namestr.find('(')
+        e_index = namestr.find(')')
+        if (s_index != -1) and (e_index != -1):
+            namestr = namestr[:s_index+1] + namestr[s_index+1].upper() + namestr[s_index+2:]
+
         return namestr
 
     def cleanCiteString(self, citestr):
@@ -537,17 +544,17 @@ class CoLNamesResolver(NamesResolver):
         # string are also returned, so we need to check each to see if we have an exact match.
         found_match = False
         for result_tag in res.getroot():
-            if name_searchstr == self.cleanNameString(result_tag.find('name').text):
+            # Retrieve, process, and check the taxon name.
+            sname = self.cleanNameString(result_tag.find('name').text)
+            if name_searchstr == sname:
                 found_match = True
                 break
 
         if not(found_match):
             return None
 
-        # Retrieve and process the rank and name.
+        # Retrieve the rank.
         srank = result_tag.find('rank').text
-        sname = result_tag.find('name').text
-        sname = self.cleanNameString(sname)
 
         # Get the kingdom name for the search result.
         kingdomnode = result_tag.find('./classification/taxon[1]/name')
