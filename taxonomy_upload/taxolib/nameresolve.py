@@ -546,12 +546,13 @@ class CoLNamesResolver(NamesResolver):
     def getSourceDescription(self):
         return 'Catalog of Life'
 
-    def searchCoLForTaxon(self, taxon, name_searchstr):
+    def searchCoLForTaxon(self, taxon, name_searchstr, return_no_author=False):
         """
         Searches for a taxon name string (the only type of search supported by CoL).
         If a match is found, returns a tuple containing the parsed XML result, the
         rank string, the cleaned name string, and the author information; otherwise,
-        returns None.
+        returns None.  If return_no_author is True, the method will return the
+        search results even if no author information was found.
         """
         args = { 'name': name_searchstr, 'response': 'full', 'format': 'xml' }
         queryurl = self.col_url + urllib.urlencode(args)
@@ -582,13 +583,13 @@ class CoLNamesResolver(NamesResolver):
                 skingdom = kingdomnode.text
             else:
                 skingdom = ''
-            #print srank, sname, skingdom
 
             # Check for a match.
             if (name_searchstr == sname) and (srank == taxon.getRankString() and
                     skingdom == self.search_kingdom):
                 match = (result_tag, sname, srank)
                 match_count += 1
+            #print srank, sname, skingdom, match_count
 
         # If there is more than one name/rank match, we don't know which is the correct
         # match and so we can't use any.
@@ -596,10 +597,16 @@ class CoLNamesResolver(NamesResolver):
             return None
 
         # Retrieve and process the author element.
-        sauthor = match[0].find('./author').text
-        authorinfo = self.processAuthorString(sauthor)
+        authtag = match[0].find('./author')
+        if authtag != None:
+            sauthor = authtag.text
+            authorinfo = self.processAuthorString(sauthor)
 
-        return match + (authorinfo,)
+            return match + (authorinfo,)
+        elif return_no_author:
+            return match + (None,)
+        else:
+            return None
 
     def processTaxon(self, taxon, depth):
         """

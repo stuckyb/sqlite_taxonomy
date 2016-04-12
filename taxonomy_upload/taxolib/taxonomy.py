@@ -303,17 +303,17 @@ class BackboneTaxonomy(TaxonomyBase):
         # Use the Catalog of Life names resolver to try to get higher taxonomy information
         # for the taxon.
         resolver = CoLNamesResolver()
-        searchres = resolver.searchCoLForTaxon(taxon)
+        searchres = resolver.searchCoLForTaxon(taxon, taxon.name.namestr, True)
         if searchres == None:
             return False
 
-        res, sname, srank = searchres
+        res, sname, srank, authorinfo = searchres
 
         # Process each parent taxon in the CoL classification, creating a chain of Taxon
         # objects to capture the higher taxonomy.  Because the name resolver search method
         # verifies that the kingdom is correct, we already know that we are connecting the
         # taxonomy to the correct kingdom.
-        taxaxml = res.find('./result/classification')
+        taxaxml = res.find('./classification')
         # It is important that we use the rank system from the taxonomy (not the backbone)
         # to ensure that rank name lookups retrieve the correct ID.
         tranksys = taxon.ranksys
