@@ -92,9 +92,10 @@ class CSVTaxonomyParser:
 
         # Get the taxon name citation information.
         self.nameciteinfo = self.tc.getTaxaCitationSettings()
-        if (self.nameciteinfo[0] != '') or (len(self.nameciteinfo[1]) > 0):
-            # Instantiate a NamesResolver to use for processing author display strings.
-            self.resolver = NamesResolver()
+
+        # Instantiate a NamesResolver to use for processing name strings and author
+        # display strings.
+        self.resolver = NamesResolver()
 
         # Get the CSV file column name mappings from the configuration file.
         ranktoCSV = self.tc.getRankMappings(rankt, ranksys)
@@ -245,13 +246,8 @@ class CSVTaxonomyParser:
                     raise TaxoCSVError('The column "' + e.args[0] + '" was not found in the taxonomy CSV file.')
 
                 if namestr != '':
-                    # Convert all characters but the first to lower case.
-                    namestr = namestr[0].upper() + namestr[1:].lower()
-                    # If this name includes a subgenus designation, make sure the first character of
-                    # the subgenus name is capitalized.
-                    p_index = namestr.find('(')
-                    if (p_index > 1):
-                        namestr = namestr[:p_index+1] + namestr[p_index+1].upper() + namestr[p_index+2:]
+                    # Clean up the name string.
+                    namestr = self.resolver.cleanNameString(namestr)
         
                     # See if this taxon has already been processed.  If not, create a Taxon object for it.
                     childtaxon = curparent.findChild(rankid, namestr)
