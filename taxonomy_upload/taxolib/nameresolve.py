@@ -282,6 +282,29 @@ class NamesResolver(TaxonVisitor):
 
         return citestr
 
+    def _getSpeciesSearchStrs(self, namestr):
+        """
+        Returns a list of name strings to try when searching for a matching taxon in
+        a resolver resource.  If namestr does not include a subgenus, only namestr
+        is returned.  Otherwise, the list will contain, in order: the original name
+        (namestr), the name without the subgenus, the name without the genus (that is,
+        considering the subgenus to be the genus).  This method assumes that the
+        components of namestr are separated by only a single whitespace character;
+        that is, that they have been processed by _commonStringCleanup().
+        """
+        nameslist = [namestr]
+
+        s_index = namestr.find('(')
+        e_index = namestr.find(')')
+        if (s_index != -1) and (e_index != -1):
+            subgenus = namestr[s_index+1 : e_index]
+            genus = namestr[:s_index-1]
+            sppart = namestr[e_index+2:]
+            nameslist.append(genus + ' ' + sppart)
+            nameslist.append(subgenus + ' ' + sppart)
+
+        return nameslist
+
     def _commonStringCleanup(self, datastr):
         """
         Common string standardization code used by the clean*String() methods.
@@ -491,13 +514,13 @@ class CoLNamesResolver(NamesResolver):
     def getSourceDescription(self):
         return 'Catalog of Life'
 
-    def searchCoLForTaxon(self, taxon):
+    def searchCoLForTaxon(self, taxon, name_searchstr):
         """
         Searches for a taxon name string (the only type of search supported by CoL).
         If a match is found, returns a tuple containing the parsed XML result, the rank
         string, and the cleaned name string; otherwise, returns None.
         """
-        args = { 'name': taxon.name.namestr, 'response': 'full', 'format': 'xml' }
+        args = { 'name': name_searchstr, 'response': 'full', 'format': 'xml' }
         queryurl = self.col_url + urllib.urlencode(args)
 
         try:
@@ -510,11 +533,11 @@ class CoLNamesResolver(NamesResolver):
             return None
 
         # Make sure we found a match.  Note that the CoL Web API documentation claims that searches
-        # only return exact matches, but this is not true.  Name strings that contain the the search
+        # only return exact matches, but this is not true.  Name strings that contain the search
         # string are also returned, so we need to check each to see if we have an exact match.
         found_match = False
         for result_tag in res.getroot():
-            if taxon.name.namestr == self.cleanNameString(result_tag.find('name').text):
+            if name_searchstr == self.cleanNameString(result_tag.find('name').text):
                 found_match = True
                 break
 
@@ -559,7 +582,14 @@ class CoLNamesResolver(NamesResolver):
 
         print 'Attempting to resolve:', taxon.name.namestr
 
-        searchres = self.searchCoLForTaxon(taxon)
+        # Search for this species' name in CoL, including name variants if it has a
+        # subgenus designation.
+        name_searchstrs = self._getSpeciesSearchStrs(taxon.name.namestr)
+        for name_searchstr in name_searchstrs:
+            searchres = self.searchCoLForTaxon(taxon, name_searchstr)
+            if searchres != None:
+                break
+
         if searchres == None:
             return
 
