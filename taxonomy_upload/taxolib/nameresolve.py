@@ -549,8 +549,9 @@ class CoLNamesResolver(NamesResolver):
     def searchCoLForTaxon(self, taxon, name_searchstr):
         """
         Searches for a taxon name string (the only type of search supported by CoL).
-        If a match is found, returns a tuple containing the parsed XML result, the rank
-        string, and the cleaned name string; otherwise, returns None.
+        If a match is found, returns a tuple containing the parsed XML result, the
+        rank string, the cleaned name string, and the author information; otherwise,
+        returns None.
         """
         args = { 'name': name_searchstr, 'response': 'full', 'format': 'xml' }
         queryurl = self.col_url + urllib.urlencode(args)
@@ -593,10 +594,14 @@ class CoLNamesResolver(NamesResolver):
         #print srank, sname, skingdom
 
         # Further verify that we have a full match.
-        if (srank == taxon.getRankString() and skingdom == self.search_kingdom):
-            return (res, sname, srank)
-        else:
+        if not(srank == taxon.getRankString() and skingdom == self.search_kingdom):
             return None
+
+        # Retrieve and process the author element.
+        sauthor = result_tag.find('./author').text
+        authorinfo = self.processAuthorString(sauthor)
+
+        return (res, sname, srank, authorinfo)
 
     def processTaxon(self, taxon, depth):
         """
@@ -625,11 +630,7 @@ class CoLNamesResolver(NamesResolver):
         if searchres == None:
             return
 
-        res, sname, srank = searchres
-
-        # Retrieve and process the author element.
-        sauthor = res.find('./result/author').text
-        authorinfo = self.processAuthorString(sauthor)
+        res, sname, srank, authorinfo = searchres
 
         #print srank, sname, authorinfo
 
