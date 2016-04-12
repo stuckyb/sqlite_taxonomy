@@ -374,50 +374,32 @@ class ZoobankNamesResolver(NamesResolver):
         else:
             return True
 
-    def processTaxon(self, taxon, depth):
+    def searchZoobankForTaxon(self, taxon, name_searchstr):
         """
-        Uses Zoobank to try to retrieve author and citation information for taxa
-        name strings.
+        Searches Zoobank for a taxon name string.  If a match is found, returns a
+        tuple containing the parsed JSON result, the cleaned name string, author
+        information, and the full citation string; otherwise, returns None.
         """
-        # Update the rank state-tracking variable.
-        self.last_lookup_rank = taxon.getRankString()
-
-        # Only operate on taxa of family-group rank or lower.  For higher taxa,
-        # Zoobank only stores "Higher" as the rank name, so we cannot make rank
-        # comparisons.
-        if taxon.rank_id < taxon.rankt.getID('Family', taxon.ranksys):
-            return
-
-        # See if we should skip this taxon because its name already exists in the
-        # database and has citation data.
-        if self._checkExistingCiteData(taxon):
-            # Consider this a lookup "success" so that we recurse to the next level,
-            # even though lookup was skipped for this taxon.
-            self.last_lookup_succeeded = True
-            print 'Skipping "' + taxon.name.namestr + '"; citation data already in database.'
-            return
-
         name = taxon.name
-        print 'Attempting to resolve:', name.namestr
-        sys.stdout.flush()
+
         # The Zoobank API returns 404 if a search returns no results, so we need to
         # check for this.  I've also found that the service is somewhat unreliable.
         # Requests will occasionally time out, even after multiple retries and with
         # rather long timeout limits (e.g., 90 seconds).  Rather than let these
         # occasional failures crash the program, catch these timeout errors, print a
         # message to the console, and move on.
-        queryurl = self.zoobank_name_url + urllib.quote(name.namestr.replace(' ', '_'))
+        queryurl = self.zoobank_name_url + urllib.quote(name_searchstr.replace(' ', '_'))
         try:
             rjson = self.queryJSON(queryurl)
         except urllib2.HTTPError as e:
             if e.code == 404:
                 rjson = []
         except ValueError as e:
-            print ('Attempt to search Zoobank for the name "' + name.namestr
+            print ('Attempt to search Zoobank for the name "' + name_searchstr
                     + '" failed because the result was not a valid JSON string.')
             rjson = []
         except socket.timeout as e:
-            print ('Attempt to search Zoobank for the name "' + name.namestr
+            print ('Attempt to search Zoobank for the name "' + name_searchstr
                     + '" failed due to multiple timeout errors.')
             rjson = []
         #print rjson
@@ -444,7 +426,7 @@ class ZoobankNamesResolver(NamesResolver):
 
                 # See if we have a match.
                 havematch = False
-                if res['rankgroup'] == taxon.getRankString() and rnamestr == name.namestr:
+                if res['rankgroup'] == taxon.getRankString() and rnamestr == name_searchstr:
                     if name.getCitation() != None:
                         # If the existing citation already has short author information, use it
                         # to further verify the match.
@@ -488,16 +470,59 @@ class ZoobankNamesResolver(NamesResolver):
                     print ('Attempt to retrieve Zoobank reference UUID ' +
                             match[0]['OriginalReferenceUUID'] + ' failed due to multiple timeout errors.')
 
-            # Update the name's citation information.
-            name.updateCitation(fullcite, authorinfo['authorstr'])
-            taxon.setUseParens(authorinfo['hasparens'])
+            return match + (fullcite,)
+        else:
+            return None
+
+    def processTaxon(self, taxon, depth):
+        """
+        Uses Zoobank to try to retrieve author and citation information for taxa
+        name strings.
+        """
+        # Update the rank state-tracking variable.
+        self.last_lookup_rank = taxon.getRankString()
+
+        # Only operate on taxa of family-group rank or lower.  For higher taxa,
+        # Zoobank only stores "Higher" as the rank name, so we cannot make rank
+        # comparisons.
+        if taxon.rank_id < taxon.rankt.getID('Family', taxon.ranksys):
+            return
+
+        # See if we should skip this taxon because its name already exists in the
+        # database and has citation data.
+        if self._checkExistingCiteData(taxon):
+            # Consider this a lookup "success" so that we recurse to the next level,
+            # even though lookup was skipped for this taxon.
+            self.last_lookup_succeeded = True
+            print 'Skipping "' + taxon.name.namestr + '"; citation data already in database.'
+            return
+
+        print 'Attempting to resolve:', taxon.name.namestr
+        sys.stdout.flush()
+
+        # Search for this species' name in Zoobank, including name variants if it has a
+        # subgenus designation.
+        if taxon.rank_id >= taxon.rankt.getID('Species', taxon.ranksys):
+            name_searchstrs = self._getSpeciesSearchStrs(taxon.name.namestr)
+            for name_searchstr in name_searchstrs:
+                searchres = self.searchZoobankForTaxon(taxon, name_searchstr)
+                if searchres != None:
+                    break
+        else:
+            searchres = self.searchZoobankForTaxon(taxon, taxon.name.namestr)
 
         # Update the success state-tracking variable.
-        if matchcnt == 1:
+        if searchres != None:
             self.last_lookup_succeeded = True
         else:
             self.last_lookup_succeeded = False
+            return
 
+        res, rname, authorinfo, fullcite = searchres
+
+        # Update the name's citation information.
+        taxon.name.updateCitation(fullcite, authorinfo['authorstr'])
+        taxon.setUseParens(authorinfo['hasparens'])
 
 class CoLNamesResolver(NamesResolver):
     """
