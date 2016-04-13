@@ -804,11 +804,9 @@ class Citation:
         if citation_id == None:
             query = """INSERT INTO citations
                 (citationstr, url, doi, authordisplay)
-                VALUES (?, ?, ?, ?)
-                RETURNING citation_id"""
+                VALUES (?, ?, ?, ?)"""
             pgcur.execute(query, (self.citestr, self.url, self.doi, self.authordisp))
-            res = pgcur.fetchone()
-            citation_id = res[0]
+            citation_id = pgcur.lastrowid
             if do_commit:
                 pgcur.connection.commit()
 
