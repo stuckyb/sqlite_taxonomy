@@ -8,17 +8,17 @@ from argparse import ArgumentParser
 
 
 argp = ArgumentParser(description='Prints a text representation of a taxonomy in the taxonomy database.  \
-The only required argument is the taxonomy ID.  A database configuration file must be provided in order \
-to connect to the taxonomy databse.  By default, "database.conf" is used, but an alternative configuration \
+The only required argument is the taxonomy ID.  A SQLite database file must be provided in order \
+to connect to the taxonomy database.  By default, "database.sqlite" is used, but an alternative database \
 file name can be provided with the -d option.  If the target taxonomy is not the MOL backbone taxonomy, \
 the program will automatically retrieve and display the higher taxa that link the target taxonomy to the \
 root of the backbone taxonomy.  To disable this, use the -g flag.')
 argp.add_argument('-n', '--numtaxa', type=int, help='the number of taxa to retrieve and print (all by default)')
 argp.add_argument('-m', '--maxdepth', type=int, help='the maximum depth to traverse the taxa tree (no limit by default)')
-argp.add_argument('-d', '--dbconf', help='the database configuration file ("database.conf" by default)')
+argp.add_argument('-d', '--dbconf', help='the SQLite database file ("database.sqlite" by default)')
 argp.add_argument('-g', '--nohigher', action='store_true', help='do not retrieve higher taxa for this taxonomy')
 argp.add_argument('taxonomy_id', type=int, help='the taxonomy ID')
-argp.set_defaults(dbconf='database.conf', numtaxa=-1, maxdepth=-1)
+argp.set_defaults(dbconf='database.sqlite', numtaxa=-1, maxdepth=-1)
 args = argp.parse_args()
 
 # Get a cursor for the taxonomy database.

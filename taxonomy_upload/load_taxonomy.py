@@ -21,15 +21,14 @@ citehelpstr = ('the name citation resolver(s) to use (' + ', '.join(resolvername
 argp = ArgumentParser(description='Loads taxonomies from CSV files into the MOL taxonomy database \
 schema.  The single required argument provides the location of a configuration file that specifies \
 the input CSV file and how it should be parsed.  The program also needs to know how to connect to \
-the taxonomy database, so a database configuration file (for a Postgres database) or a database \
-file (for SQLite) must be provided.  By default, "database.conf" is used; an alternative \
-configuration file or database file can be specified using the -d option.')
-argp.add_argument('-d', '--dbconf', help='the database configuration file or database file ("database.conf" by default)')
+the taxonomy database, so a SQLite database file must be provided.  By default, "database.sqlite" \
+is used; an alternative database file can be specified using the -d option.')
+argp.add_argument('-d', '--dbconf', help='the SQLite database file ("database.sqlite" by default)')
 argp.add_argument('-l', '--resolvers', help=citehelpstr)
 argp.add_argument('-c', '--comptaxoid', type=int, help='the ID of a taxonomy to check for name citation \
 data (-1 [=none] by default)')
 argp.add_argument('infile', help='the CSV taxonomy configuration file')
-argp.set_defaults(dbconf='database.conf', resolvers='all', comptaxoid=-1)
+argp.set_defaults(dbconf='database.sqlite', resolvers='all', comptaxoid=-1)
 args = argp.parse_args()
 
 # Get a cursor for the taxonomy database.

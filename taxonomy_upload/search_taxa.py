@@ -10,10 +10,10 @@ from argparse import ArgumentParser
 
 argp = ArgumentParser(description='Searches for taxa in the taxonomy database by matching the taxon name \
 string.  "%" can be used as a wildcard character in the search string.')
-argp.add_argument('-d', '--dbconf', help='the database configuration file ("database.conf" by default)')
-argp.add_argument('-s', '--nosynonyms', action='store_true', help='do not synonyms for taxa names')
+argp.add_argument('-d', '--dbconf', help='the SQLite database file ("database.sqlite" by default)')
+argp.add_argument('-s', '--nosynonyms', action='store_true', help='do not search synonyms for taxa names')
 argp.add_argument('search_string', help='the name search string')
-argp.set_defaults(dbconf='database.conf', numtaxa=-1, maxdepth=-1)
+argp.set_defaults(dbconf='database.sqlite', numtaxa=-1, maxdepth=-1)
 args = argp.parse_args()
 
 # Get a cursor for the taxonomy database.

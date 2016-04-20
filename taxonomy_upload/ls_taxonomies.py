@@ -6,8 +6,8 @@ from argparse import ArgumentParser
 
 
 argp = ArgumentParser(description='Prints a list of all taxonomies in a taxonomy database.')
-argp.add_argument('-d', '--dbconf', help='the database configuration file ("database.conf" by default)')
-argp.set_defaults(dbconf='database.conf')
+argp.add_argument('-d', '--dbconf', help='the SQLite database file ("database.sqlite" by default)')
+argp.set_defaults(dbconf='database.sqlite')
 args = argp.parse_args()
 
 # Get a cursor for the taxonomy database.
