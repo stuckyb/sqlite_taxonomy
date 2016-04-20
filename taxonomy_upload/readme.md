@@ -14,7 +14,7 @@ Parses a CSV taxonomy file and loads it into the database.
 
 Processing a CSV taxonomy file requires a configuration file that provides metadata for the taxonomy and defines which columns in the CSV file contain taxonomy information and how they should map to the rank names used in the database.  For a complete example, see the sample configuration file, "taxonomies/example.conf", which also includes extensive comments explaining the configuration file format.
 
-To connect to the taxonomy database, `load_taxonomy.py` also needs a database configuration file.  By default, `load_taxonomy.py` will look for a file called "database.conf", but an alternative configuration file can be specified using the `-d` option.  See the included "database.conf" file for an example.
+To connect to the taxonomy database, `load_taxonomy.py` also needs a SQLite database file.  By default, `load_taxonomy.py` will look for a file called "database.sqlite", but an alternative database file can be specified using the `-d` option.
 
 After parsing a taxonomy file, `load_taxonomy.py` will, by default, attempt to retrieve citation information for the taxa name strings.  Currently, a two-tiered strategy is used.  Name strings are first checked against Catalog of Life to retrieve name author data, then against the Zoobank database to retrieve any additional citation information.  Name citation resolution can be controlled with the `-l` option.  To use all name citation resolvers (which is also the default), use `-l all`.  To completely disable name citation resolution, use `-l none`.  Individual resolvers can be selected with an integer index.  Currently, 0 = Catalog of Life and 1 = Zoobank.
 
@@ -79,7 +79,7 @@ Load the BirdLife taxonomy into the database, and check the Jetz et al. taxonomy
 
 This program parses a taxonomy contained in a CSV file and prints it to standard out.  The program prints metadata for the taxonomy (e.g., ID, citation, etc.) along with the tree of included taxa.
 
-Like `load_taxonomy.py`, `print_csv_taxonomy.py` requires a taxonomy configuration file for the input CSV file and a database configuration file.  (Rank information from the taxonomy database is required for parsing CSV taxonomy files.)  See the documentation for `load_taxonomy.py`, above, for more details about these two files.
+Like `load_taxonomy.py`, `print_csv_taxonomy.py` requires a taxonomy configuration file for the input CSV file and a SQLite database file.  (Rank information from the taxonomy database is required for parsing CSV taxonomy files.)  See the documentation for `load_taxonomy.py`, above, for more details about these two files.
 
 By default, print_csv_taxonomy.py will print the taxonomy's full taxa tree.  For large taxonomies, though, it is often more useful to view only a subset of the full taxonomy.  Two options are currently provided to limit the output.  The option `-n NUMTAXA` will cause print_csv_taxonomy.py to only print the first `NUMTAXA` taxa from the taxonomy.  The option `-m MAXDEPTH` will cause print_csv_taxonomy.py to only descend into the taxa tree up to a maximum depth of `MAXDEPTH`.
 
@@ -108,7 +108,7 @@ The two output-limiting options can be combined.  For, example the following com
 
 Reads a taxonomy from a database and prints it to the screen.  The output is nearly identical to that produced by `print_csv_taxonomy.py`.  In fact, the output of these two programs can be compared to verify that a database representation of a taxonomy is structurally the same as its CSV representation.
 
-As with the previous two programs, `dump_db_taxonomy.py` requires a database configuration file in order to connect to a taxonomy database.  See the documentation of `load_taxonomy.py` for more details.
+As with the previous two programs, `dump_db_taxonomy.py` requires a SQLite database file in order to connect to a taxonomy database.  See the documentation of `load_taxonomy.py` for more details.
 
 The only required argument is the ID of the taxonomy to load from the database (that is, the value of "taxonomy_id" from the "taxonomies" table).
 
@@ -135,7 +135,7 @@ Read the taxonomy with ID 1 from the database, but only traverse 2 levels deep i
 
 Prints a list of all taxonomies in a taxonomy database, along with some basic information about each taxonomy.
 
-As with the previous programs, `ls_taxonomies.py` requires a database configuration file in order to connect to a taxonomy database.  See the documentation of `load_taxonomy.py` for more details.
+As with the previous programs, `ls_taxonomies.py` requires a SQLite database file in order to connect to a taxonomy database.  See the documentation of `load_taxonomy.py` for more details.
 
 #### Example
 
