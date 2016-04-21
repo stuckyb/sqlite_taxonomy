@@ -4,7 +4,8 @@ the taxacomponents module.
 """
 
 
-from taxacomponents import TaxonVisitor, Citation, RankTable, Taxon, PrintTaxonVisitor
+from taxacomponents import Citation, RankTable, Taxon
+from taxonvisitor import TaxonVisitor, PrintTaxonVisitor, CSVTaxonVisitor
 from nameresolve import CoLNamesResolver
 
 
@@ -93,6 +94,20 @@ class TaxonomyBase:
         print '** Taxonomy information **'
         print str(self)
         print str(self.citation)
+
+    def printCSVTaxaTree(self, numtaxa=-1, maxdepth=-1):
+        """
+        Prints the tree of taxa for this taxonomy in "flat" format as CSV outut.  If
+        numtaxa > 0, only the first numtaxa taxa will be printed.  If maxdepth > -1,
+        the taxa tree will only be traversed to a depth of maxdepth.
+        """
+        if numtaxa > 0:
+            print '(Only printing first', numtaxa, 'taxa.)'
+        if maxdepth > -1:
+            print '(Only traversing taxa tree to a depth of ' + str(maxdepth) + '.)'
+
+        csvvisitor = CSVTaxonVisitor(numtaxa, maxdepth)
+        csvvisitor.visit(self.roottaxon)
 
     def printTaxaTree(self, numtaxa=-1, maxdepth=-1):
         """

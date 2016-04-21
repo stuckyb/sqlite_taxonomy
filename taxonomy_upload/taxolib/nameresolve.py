@@ -7,7 +7,8 @@ import xml.etree.ElementTree as et
 import re
 import sys, time
 import pprint
-from taxolib.taxacomponents import Taxon, Citation, TaxonVisitor
+from taxolib.taxacomponents import Taxon, Citation
+from taxolib.taxonvisitor import TaxonVisitor
 
 
 def getResolversList():
