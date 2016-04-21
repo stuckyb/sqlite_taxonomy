@@ -26,12 +26,10 @@ except ConfigError as e:
 
 # Attempt to load the taxonomy from the database.
 taxonomy = Taxonomy(args.taxonomy_id)
-print 'Loading taxonomy from the database...'
 try:
     taxonomy.loadFromDB(pgcur, args.numtaxa, args.maxdepth)
 except TaxonomyError as e:
     exit('\n' + str(e) + '\n')
-print 'done.\n'
 
 taxonomy.printCSVTaxaTree(args.numtaxa, args.maxdepth)
 
