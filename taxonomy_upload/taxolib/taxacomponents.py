@@ -3,6 +3,8 @@ Provides classes that model the basic pieces of a taxonomy: rank information, ta
 names, citations, and algorithms to operate on trees of taxon concepts.
 """
 
+import csv, sys
+
 
 class RankTable:
     """
@@ -551,6 +553,8 @@ class TaxonVisitor:
                     break
                 self._traverseTree(child, depth + 1)
 
+        self.postTaxonProcessing(taxon, depth)
+
     def doRecursion(self):
         """
         This method can be overriden by child classes and used to implement additional
@@ -566,6 +570,14 @@ class TaxonVisitor:
         This method is called for each Taxon object in the tree.  The argument 'depth'
         provides the current depth in the tree, with the root at 0.  This method should
         be overridden by child classes to actually do something with each Taxon object.
+        """
+        pass
+
+    def postTaxonProcessing(self, taxon, depth):
+        """
+        This method is called after tree traversal has returned from recursively
+        traversing taxon's descendents.  It can be overridden by child classes to
+        implement "clean up" code that should be run before leaving a taxon.
         """
         pass
 
@@ -587,6 +599,10 @@ class RankAccumulatorTaxonVisitor(TaxonVisitor):
     a taxonomy tree.
     """
     def visit(self, taxon):
+        """
+        Returns a list of all taxonomic rank names used in a taxonomy tree.  The rank
+        names will be sorted according to their IDs in the database.
+        """
         # Initialize a list for the rank strings.
         self.ranks = []
 
@@ -611,20 +627,41 @@ class CSVTaxonVisitor(TaxonVisitor):
     """
     def visit(self, taxon):
         # Get a list of all ranks used in the tree..
-        self.ranks = RankAccumulatorTaxonVisitor().visit(taxon)
-        print self.ranks
-        exit()
+        ranks = RankAccumulatorTaxonVisitor().visit(taxon)
 
-        # Call the superclass method implementation.
+        # Set up the CSV writer.
+        csvheader = ranks + ['Author', 'Synonyms', 'Citation']
+        self.writer = csv.DictWriter(sys.stdout, fieldnames=csvheader)
+        self.writer.writeheader()
+
+        # Create a dictionary for storing CSV row values.
+        self.rowvals = {}
+        for colname in csvheader:
+            self.rowvals[colname] = ''
+
+        # Call the superclass method implementation to initiate the traversal.
         TaxonVisitor.visit(self, taxon)
 
-        return self.ranks
+        return
 
     def processTaxon(self, taxon, depth):
-        print taxon.name.namestr
-        print taxon.getRankString()
-        print taxon.getAuthorDisplayString()
-        print taxon.getSynonymsString()
+        rank = taxon.getRankString()
+        self.rowvals[rank] = taxon.name.namestr
+
+        # Only get author and synonym information and print a row if we're at a
+        # leaf of the tree.  This makes the CSV output consistent with the way
+        # CSV taxonomy files are parsed by the input routines.
+        if len(taxon.children) == 0:
+            self.rowvals['Author'] = taxon.getAuthorDisplayString()
+            self.rowvals['Synonyms'] = taxon.getSynonymsString()
+            #self.rowvals['Citation'] = taxon.name.getCitationString()
+            self.writer.writerow(self.rowvals)
+
+    def postTaxonProcessing(self, taxon, depth):
+        self.rowvals[taxon.getRankString()] = ''
+        self.rowvals['Author'] = ''
+        self.rowvals['Synonyms'] = ''
+        self.rowvals['Citation'] = ''
 
 
 class NamesTaxonVisitor(TaxonVisitor):
@@ -658,6 +695,16 @@ class Name:
 
     def getCitation(self):
         return self.citation
+
+    def getCitationString(self):
+        """
+        Returns the full citation string for this name, or the empty string
+        if no citation information is available.
+        """
+        if self.citation != None:
+            return self.citation.citestr
+        else:
+            return ''
 
     def updateCitation(self, citestr, authordisp):
         """
