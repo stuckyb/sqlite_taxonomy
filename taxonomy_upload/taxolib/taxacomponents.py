@@ -283,16 +283,27 @@ class Taxon:
         self.ranksys = self.rankt.getRanksysByRankID(self.rank_id)
 
     def __str__(self):
-        # Get the author display string, adding parentheses if needed.
+        authorstr = self.getAuthorDisplayString()
+        if authorstr != '':
+            authorstr = ' ' + authorstr
+
+        return self._getRankNameString() + authorstr + '; depth: ' + str(self.depth)
+
+    def getAuthorDisplayString(self):
+        """
+        Returns the author display string for the valid name for this taxon.
+        """
         authorstr = ''
         cite = self.name.getCitation()
+        # Get the author display string, adding parentheses if needed.
         if cite != None:
             if cite.authordisp != '' and cite.authordisp != None:
                 if self.namelist.getPreferredUseParens():
-                    authorstr = ' (' + cite.authordisp + ')'
+                    authorstr = '(' + cite.authordisp + ')'
                 else:
-                    authorstr = ' ' + cite.authordisp
-        return self._getRankNameString() + authorstr + '; depth: ' + str(self.depth)
+                    authorstr = cite.authordisp
+
+        return authorstr
 
     def _getRankNameString(self):
         return self.getRankString() + ': ' + self.name.namestr
@@ -507,7 +518,7 @@ class TaxonVisitor:
     taxon tree and operate on each Taxon object in the tree.  The traversal can be limited
     by either the total number of taxa processed or tree depth (or both).  In essence, this
     base class encapsulates an algorithm for traversing a taxa tree and allows operations
-    on tree objects to be implemented indepently of the Taxon implementation.
+    on tree objects to be implemented independently of the Taxon implementation.
     """
     def __init__(self, numtaxa=-1, maxdepth=-1):
         """
@@ -568,6 +579,52 @@ class PrintTaxonVisitor(TaxonVisitor):
         synstr = taxon.getSynonymsString()
         if synstr != '':
             print '   ' * depth + '  -- Synonyms: ' + synstr
+
+
+class RankAccumulatorTaxonVisitor(TaxonVisitor):
+    """
+    A taxon visitor class that builds a list of all taxonomic ranks that are used in
+    a taxonomy tree.
+    """
+    def visit(self, taxon):
+        # Initialize a list for the rank strings.
+        self.ranks = []
+
+        # Call the superclass method implementation to initiate the traversal.
+        TaxonVisitor.visit(self, taxon)
+
+        # Sort the ranks according to their rank IDs.
+        self.ranks.sort(key=lambda rankstr: taxon.rankt.getID(rankstr, taxon.ranksys))
+
+        return self.ranks
+
+    def processTaxon(self, taxon, depth):
+        rankstr = taxon.getRankString()
+
+        if rankstr not in self.ranks:
+            self.ranks.append(rankstr)
+
+
+class CSVTaxonVisitor(TaxonVisitor):
+    """
+    Prints a CSV representation of a taxon tree.
+    """
+    def visit(self, taxon):
+        # Get a list of all ranks used in the tree..
+        self.ranks = RankAccumulatorTaxonVisitor().visit(taxon)
+        print self.ranks
+        exit()
+
+        # Call the superclass method implementation.
+        TaxonVisitor.visit(self, taxon)
+
+        return self.ranks
+
+    def processTaxon(self, taxon, depth):
+        print taxon.name.namestr
+        print taxon.getRankString()
+        print taxon.getAuthorDisplayString()
+        print taxon.getSynonymsString()
 
 
 class NamesTaxonVisitor(TaxonVisitor):
