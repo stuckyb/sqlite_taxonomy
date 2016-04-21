@@ -5,7 +5,8 @@ the taxacomponents module.
 
 
 from taxacomponents import Citation, RankTable, Taxon
-from taxonvisitor import TaxonVisitor, PrintTaxonVisitor, CSVTaxonVisitor
+from taxonvisitor import TaxonVisitor
+from taxonvisitors_concrete import PrintTaxonVisitor, CSVTaxonVisitor
 from nameresolve import CoLNamesResolver
 
 
