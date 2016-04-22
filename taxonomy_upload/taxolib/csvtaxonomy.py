@@ -167,11 +167,14 @@ class CSVTaxonomyParser:
                 name = Name(val.strip())
                 taxon.namelist.addName(name, False, False)
 
-    def _addNameCitation(self, taxon, authorstr):
+    def _addNameCitation(self, taxon, authorstr, fullcitestr):
         """
         Attaches citation information to the name of a taxon.  The argument authorstr
-        provides the author display string for the name authority citation.
+        provides the author display string for the name authority citation; fullcitestr
+        provides the full citation string.
         """
+        fullcitestr = fullcitestr.strip()
+
         if authorstr.strip() != '':
             authorinfo = self.resolver.processAuthorString(authorstr)
 
@@ -179,8 +182,10 @@ class CSVTaxonomyParser:
                 # Attempt to fix the casing of the author string.
                 authorinfo['authorstr'] = authorinfo['authorstr'].title()
 
-            taxon.name.updateCitation(None, authorinfo['authorstr'])
+            taxon.name.updateCitation(fullcitestr, authorinfo['authorstr'])
             taxon.setUseParens(authorinfo['hasparens'])
+        elif fullcitestr != '':
+            taxon.name.updateCitation(fullcitestr, '')
 
     def _readCSVRows(self, reader, taxonomyroot, ranktoCSV, rankt):
         """
@@ -256,7 +261,7 @@ class CSVTaxonomyParser:
                         # If we have rank-specific citation data for this taxon, attach it.
                         rankname = rankt.getName(rankid)
                         if rankname in self.nameciteinfo[1]:
-                            self._addNameCitation(childtaxon, row[self.nameciteinfo[1][rankname]])
+                            self._addNameCitation(childtaxon, row[self.nameciteinfo[1][rankname]], '')
                         self.totaltaxa += 1
         
                     # Set the child Taxon as the parent for the next taxon to process in the row.
@@ -268,8 +273,14 @@ class CSVTaxonomyParser:
 
             # Attach any rank-inspecific citation data to the name of the last child taxon we
             # processed for this row.
-            if self.nameciteinfo[0] != '':
-                self._addNameCitation(childtaxon, row[self.nameciteinfo[0]])
+            nameauthstr = ''
+            namefullcitestr = ''
+            if self.nameciteinfo[0][0] != '':
+                nameauthstr = row[self.nameciteinfo[0][0]]
+            if self.nameciteinfo[0][1] != '':
+                namefullcitestr = row[self.nameciteinfo[0][1]]
+            if (nameauthstr != '') or (namefullcitestr != ''):
+                self._addNameCitation(childtaxon, nameauthstr, namefullcitestr)
 
 
     def getStats(self):

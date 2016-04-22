@@ -28,10 +28,10 @@ class ColumnFilter:
         """
         self.column = colname
         
-        # This is hack to get the type of compiled regex objects.  The Python documentation
+        # This is a hack to get the type of compiled regex objects.  The Python documentation
         # says these should be of type re.RegexObject, but no such class is defined in the
         # re module.  I consider this to be a problem with the Python implementation, so this
-        # this stupid hack is currently the safest way to get the object type.
+        # stupid hack is currently the safest way to get the object type.
         self.reobjtype = type(re.compile(''))
 
         self.filtervals = self._processValueList(valuelist)
@@ -245,17 +245,21 @@ class TaxonomyConfig(RawConfigParser):
     def getTaxaCitationSettings(self):
         """
         Returns citation settings for taxon names.  Returns a tuple that contains
-        three items, in the following order: 1) the CSV column name that contains
-        rank-inspecific citation information, 2) a dictionary mapping MOL rank
-        names to CSV column names that contain rank-specific citation information,
-        and 3) a Boolean value that indicates whether the parser should to try to
-        fix casing problems.  If the first setting is not defined, '' is returned,
-        and if no rank-specific citation information is defined, an empty dictionary
-        is returned.
+        three items, in the following order: 1) a tuple containing, in order, the
+        CSV column name that contains rank-inspecific short author strings, and the
+        CSV column name that contains the full citations for the author strings; 2)
+        a dictionary mapping MOL rank names to CSV column names that contain
+        rank-specific citation information; and 3) a Boolean value that indicates
+        whether the parser should to try to fix casing problems.  If the first
+        setting is not defined, '' is returned, and if no rank-specific citation
+        information is defined, an empty dictionary is returned.
         """
         nameauthcol = ''
         if self.has_option('citation', 'nameauthorcol'):
             nameauthcol = self.get('citation', 'nameauthorcol')
+        namefullcitecol = ''
+        if self.has_option('citation', 'namefullcitecol'):
+            namefullcitecol = self.get('citation', 'namefullcitecol')
 
         rankciteinfo = {}
         for optname, optval in self.items('citation'):
@@ -267,7 +271,7 @@ class TaxonomyConfig(RawConfigParser):
         if self.has_option('citation', 'fixcasing'):
             fixcasing = self.getboolean('citation', 'fixcasing')
 
-        return (nameauthcol, rankciteinfo, fixcasing)
+        return ((nameauthcol, namefullcitecol), rankciteinfo, fixcasing)
 
     def getSynonymSettings(self):
         """
