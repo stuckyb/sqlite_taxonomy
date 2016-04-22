@@ -236,6 +236,7 @@ class Taxon:
         will, by default, use the value of taxonomy_id for their taxonomy ID.
         """
         self.taxonomy_id = taxonomy_id
+        self.tc_id = 0
         self.rankt = ranktable
         self.depth = depth
         self.isroot = isroot
@@ -356,6 +357,7 @@ class Taxon:
 
         self.setRankID(res[0])
 
+        self.tc_id = tc_id
         self.depth = res[1]
 
         if self.isroot:
