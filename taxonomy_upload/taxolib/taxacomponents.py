@@ -32,11 +32,23 @@ class RankTable:
                 self.namestoIDs[rsid][rec[1]] = rec[0]
                 self.IDstonames[rec[0]] = rec[1]
 
-    def isIDInRanksys(self, rankid):
+    def getMinRankID(self, ranksys):
         """
-        Checks if a given rank ID is within the current rank system.
+        Returns the minimum ID within a given rank system.
         """
-        return rankid in self.namestoIDs[self.ranksys].itervalues()
+        return min(self.namestoIDs[ranksys].itervalues())
+
+    def getMaxRankID(self, ranksys):
+        """
+        Returns the minimum ID within a given rank system.
+        """
+        return max(self.namestoIDs[ranksys].itervalues())
+
+    def isIDInRanksys(self, ranksys, rankid):
+        """
+        Checks if a given rank ID is within a given rank system.
+        """
+        return rankid in self.namestoIDs[ranksys].itervalues()
 
     def getRanksysByRankID(self, rankid):
         """
