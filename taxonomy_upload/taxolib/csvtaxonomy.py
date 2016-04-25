@@ -48,7 +48,11 @@ class UnicodeDictWriter(csv.DictWriter):
     def writerow(self, row):
         encrow = {}
         for key in row.keys():
-            encrow[key] = row[key].encode('utf-8')
+            if isinstance(row[key], basestring):
+                # Only try to encode instances of string types.
+                encrow[key] = row[key].encode('utf-8')
+            else:
+                encrow[key] = row[key]
 
         # Call the superclass method.
         csv.DictWriter.writerow(self, encrow)
