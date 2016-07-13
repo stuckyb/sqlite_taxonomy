@@ -281,19 +281,16 @@ class BackboneTaxonomy(TaxonomyBase):
 
     def linkTaxonomy(self, taxonomy):
         """
-        Given a Taxonomy object, this method searches for the root taxon concept in the
-        database, verifies whether it is already connected to the MOL backbone taxonomy,
-        and if not, creates the Taxon objects needed to link it to the backbone taxonomy.
-        To do this, the method first checks whether the taxon concept exists in the
-        database, and if so, whether it has a parent.  If it has a parent, then it is
-        assumed to already be connected to the backbone taxonomy.  Provided that
-        taxonomies are correctly added to the database, this assumption should be valid.
-        If it is not already linked to the backbone taxonomy, then Catalog of Life is
-        used to try to infer the missing taxon nodes that connect the target taxonomy
-        to the backbone taxonomy.  If needed, the depth properties of nodes in the target
-        taxonomy are adjusted so the values are relative to the depth of the target
-        taxonomy's root node in the backbone taxonomy.  If the linking is succesful,
-        the method returns True; otherwise, False is returned.
+        Given a Taxonomy object, this method searches for the root taxon
+        concept in the database, verifies whether it is already connected to
+        the MOL backbone taxonomy, and if not, attempts to create the Taxon
+        objects needed to link it to the backbone taxonomy.  To do this, the
+        method loads all ancestors of the root of the provided taxonomy, and
+        checks if the top-most ancestor is the root of the backbone taxonomy.
+        If it not, then Catalog of Life is used to try to infer the missing
+        taxon nodes that connect the target taxonomy to the backbone taxonomy.
+        If the linking is succesful, the method returns True; otherwise, False
+        is returned.
         """
         # Load any parent links to the target taxonomy from the database.
         topnode = self.getLinksFromDB(taxonomy)
@@ -349,16 +346,17 @@ class BackboneTaxonomy(TaxonomyBase):
 
     def getLinksFromDB(self, taxonomy):
         """
-        Determines whether a taxonomy's root taxon is already linked to the MOL backbone
-        taxonomy by attempting to follow parent_id links back to the backbone root.
-        Returns the top-most node that could be reached by following the links upward.
+        Starting from the root node of the provided taxonomy, follows parent
+        links upward, building a chain of taxon objects until the top-most
+        parent is reached.  Returns the top-most node that could be reached by
+        following the links upward.
         """
         # See if the root taxon_concept already has a parent.
         curnode = taxonomy.roottaxon
         parent_id = taxonomy.roottaxon.getParentIDFromDB(self.pgcur)
 
-        # Follow parent links upwards until we reach the root or any other node that
-        # has no parent or does not yet exist in the database.
+        # Follow parent links upwards until we reach the root or any other node
+        # that has no parent or does not yet exist in the database.
         while parent_id != None and parent_id != self.NIL_UUID:
             # Create the parent node and load it from the database.
             parent = Taxon(curnode.taxonomy_id, curnode.rank_id, curnode.rankt)
